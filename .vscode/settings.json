@@ -1,0 +1,25 @@
+{
+  "ethos.firmware": "X20S_FCC",
+  "ethos.root": "simulator/${config:ethos.firmware}",
+  "mogster.deploy.language": "en",
+  "Lua.diagnostics.globals": [
+    "lcd",
+    "system",
+    "os",
+    "math",
+    "string",
+    "EVT_TOUCH_TAP",
+    "FONT_STD",
+    "FONT_XL",
+    "FONT_XS",
+    "FONT_XXL",
+    "BOOL"
+  ],
+  "Lua.runtime.version": "Lua 5.3",
+  "Lua.workspace.library": [
+    "${workspaceFolder}"
+  ],
+  "files.associations": {
+    "*.lua": "lua"
+  }
+}
