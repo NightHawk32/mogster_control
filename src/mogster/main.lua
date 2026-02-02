@@ -2,7 +2,7 @@
  * Mogster Control - Main Entry Point
  * 
  * Dashboard widget for controlling Mogster off-road vehicle
- * Features: Lights, Indicators, Sound, Battery Status
+ * Features: Lights, Indicators, Sound, Battery Status, Tipper Control
  * 
  * License: MIT
 --]]
@@ -14,28 +14,34 @@ local assets = {}
 local function loadAssets()
     local basePath = "/scripts/mogster/assets/"
     assets.arrowLeft = lcd.loadBitmap(basePath .. "arrow_left.png")
+    assets.down = lcd.loadBitmap(basePath .. "down.png")
+    assets.emLight = lcd.loadBitmap(basePath .. "em_light.png")
+    assets.horn = lcd.loadBitmap(basePath .. "horn.png")
+    assets.light = lcd.loadBitmap(basePath .. "light.png")
+    assets.up = lcd.loadBitmap(basePath .. "up.png")
 end
 
 -- State variables
 local state = {
     lightsOn = false,
+    highBeamsOn = false,
     indicatorLeft = false,
     indicatorRight = false,
+    warningLight = false,
     hornActive = false,
-    button5 = false,
-    button6 = false,
-    button7 = false,
-    button8 = false,
+    hornPressed = false,  -- Track if horn button is currently pressed
+    tipperUp = false,
+    tipperDown = false,
     batteryVoltage = 12.6,
     batteryPercent = 75,
     blinkState = false,
     lastBlinkTime = 0
 }
 
--- Source for indicator control
-local indicatorSource = nil
+-- Orange color for active buttons
+local ORANGE = lcd.RGB(255, 140, 0)
 
--- Source callback functions
+-- Source callback functions for Indicator
 local function indicatorSourceInit(source)
     print("Indicator source init")
     source:unit(UNIT_RAW)
@@ -43,7 +49,6 @@ local function indicatorSourceInit(source)
 end
 
 local function indicatorSourceWakeup(source)
-    -- Update source value based on current state
     local value = 0
     if state.indicatorLeft then
         value = -100  -- Full left
@@ -53,10 +58,61 @@ local function indicatorSourceWakeup(source)
     source:value(value)
 end
 
--- Helper function to trigger indicator update
-local function updateIndicatorValue()
-    print("Indicator state changed")
-    -- The actual update happens in the wakeup callback
+-- Source callback functions for Tipper
+local function tipperSourceInit(source)
+    print("Tipper source init")
+    source:unit(UNIT_RAW)
+    source:value(0)
+end
+
+local function tipperSourceWakeup(source)
+    local value = 0
+    if state.tipperUp then
+        value = 100   -- Up
+    elseif state.tipperDown then
+        value = -100  -- Down
+    end
+    source:value(value)
+end
+
+-- Source callback functions for Warning Light
+local function warningSourceInit(source)
+    print("Warning light source init")
+    source:unit(UNIT_RAW)
+    source:value(0)
+end
+
+local function warningSourceWakeup(source)
+    source:value(state.warningLight and 100 or 0)
+end
+
+-- Source callback functions for Lights
+local function lightsSourceInit(source)
+    print("Lights source init")
+    source:unit(UNIT_RAW)
+    source:value(0)
+end
+
+local function lightsSourceWakeup(source)
+    local value = 0
+    if state.lightsOn then
+        value = 50  -- Lights on
+    end
+    if state.highBeamsOn then
+        value = 100  -- High beams on
+    end
+    source:value(value)
+end
+
+-- Source callback functions for Horn
+local function hornSourceInit(source)
+    print("Horn source init")
+    source:unit(UNIT_RAW)
+    source:value(0)
+end
+
+local function hornSourceWakeup(source)
+    source:value(state.hornActive and 100 or 0)
 end
 
 -- Helper function to render control button with optional icon
@@ -65,7 +121,7 @@ local function renderControlButton(x, y, size, label, active, activeColor, icon,
     
     -- Button background
     if active then
-        lcd.color(activeColor or lcd.RGB(0, 200, 0))
+        lcd.color(activeColor or ORANGE)
     else
         lcd.color(isDarkMode and lcd.RGB(40, 40, 40) or lcd.RGB(200, 200, 200))
     end
@@ -171,31 +227,33 @@ local function paint(widget)
     lcd.color(isDarkMode and lcd.RGB(20, 20, 20) or lcd.RGB(240, 240, 240))
     lcd.drawFilledRectangle(zone.x, zone.y, zone.w, zone.h)
     
-    -- Calculate button layout (square buttons) - smaller size
+    -- Calculate button layout (square buttons)
     local buttonSize = math.min(70, (zone.w - 80) / 4)
     local spacing = 15
     local totalWidth = buttonSize * 4 + spacing * 3
     local startX = zone.x + (zone.w - totalWidth) / 2
     
-    -- First row of control buttons with icons
+    -- First row: Lights, High Beams, Warning Light, Horn
     local buttonY1 = zone.y + 15
-    renderControlButton(startX, buttonY1, buttonSize, "LIGHTS", state.lightsOn, lcd.RGB(255, 200, 0), "💡", nil)
+    renderControlButton(startX, buttonY1, buttonSize, "LIGHTS", state.lightsOn, ORANGE, nil, assets.light)
+    renderControlButton(startX + buttonSize + spacing, buttonY1, buttonSize, "HIGH", state.highBeamsOn, ORANGE, nil, nil)
+    -- Warning light with blinking
+    local warningActive = state.warningLight and state.blinkState
+    renderControlButton(startX + (buttonSize + spacing) * 2, buttonY1, buttonSize, "WARN", warningActive, ORANGE, "⚠", assets.emLigh)
+    renderControlButton(startX + (buttonSize + spacing) * 3, buttonY1, buttonSize, "HORN", state.hornActive, ORANGE, nil, assets.horn)
+    
+    -- Second row: Left Indicator, Right Indicator, Tipper Up, Tipper Down
+    local buttonY2 = buttonY1 + buttonSize + spacing
     -- Left indicator with blinking
     local leftActive = state.indicatorLeft and state.blinkState
-    renderControlButton(startX + buttonSize + spacing, buttonY1, buttonSize, "LEFT", leftActive, lcd.RGB(255, 140, 0), nil, assets.arrowLeft)
-    -- Right indicator with blinking
+    renderControlButton(startX, buttonY2, buttonSize, "LEFT", leftActive, ORANGE, nil, assets.arrowLeft)
+    -- Right indicator with blinking (mirror the left arrow)
     local rightActive = state.indicatorRight and state.blinkState
-    renderControlButton(startX + (buttonSize + spacing) * 2, buttonY1, buttonSize, "RIGHT", rightActive, lcd.RGB(255, 140, 0), "►", nil)
-    renderControlButton(startX + (buttonSize + spacing) * 3, buttonY1, buttonSize, "HORN", state.hornActive, lcd.RGB(200, 0, 0), "🔊", nil)
+    renderControlButton(startX + buttonSize + spacing, buttonY2, buttonSize, "RIGHT", rightActive, ORANGE, "►", nil)
+    renderControlButton(startX + (buttonSize + spacing) * 2, buttonY2, buttonSize, "UP", state.tipperUp, ORANGE, nil, assets.up)
+    renderControlButton(startX + (buttonSize + spacing) * 3, buttonY2, buttonSize, "DOWN", state.tipperDown, ORANGE, nil, assets.down)
     
-    -- Second row of control buttons with icons
-    local buttonY2 = buttonY1 + buttonSize + spacing
-    renderControlButton(startX, buttonY2, buttonSize, "BTN 5", state.button5, lcd.RGB(0, 150, 255), "5", nil)
-    renderControlButton(startX + buttonSize + spacing, buttonY2, buttonSize, "BTN 6", state.button6, lcd.RGB(0, 200, 100), "6", nil)
-    renderControlButton(startX + (buttonSize + spacing) * 2, buttonY2, buttonSize, "BTN 7", state.button7, lcd.RGB(150, 0, 255), "7", nil)
-    renderControlButton(startX + (buttonSize + spacing) * 3, buttonY2, buttonSize, "BTN 8", state.button8, lcd.RGB(255, 100, 150), "8", nil)
-    
-    -- Battery status - moved up with smaller height
+    -- Battery status
     local battY = buttonY2 + buttonSize + 20
     local battW = zone.w - 80
     local battH = 60
@@ -206,9 +264,22 @@ local function event(widget, category, value, x, y)
     if not widget then
         return false
     end
-    -- print("Event received: category=" .. tostring(category) .. " value=" .. tostring(value) .. " x=" .. tostring(x) .. " y=" .. tostring(y))
     
-    -- Handle touch events
+    print("Event: category=" .. tostring(category) .. " value=" .. tostring(value) .. " x=" .. tostring(x) .. " y=" .. tostring(y))
+    
+    -- Handle touch release - deactivate horn if it was pressed
+    if category == 1 and (value == 16642 or value == 16643) then
+        if state.hornPressed then
+            state.hornActive = false
+            state.hornPressed = false
+            lcd.invalidate()
+            print("Horn deactivated on release")
+            return true
+        end
+        return false
+    end
+    
+    -- Handle touch events (press)
     if category == 1 and value == 16641 then
         local screenW, screenH = lcd.getWindowSize()
         local zone = {x = 0, y = 0, w = screenW, h = screenH}
@@ -224,54 +295,73 @@ local function event(widget, category, value, x, y)
             -- Lights button
             if x >= startX and x <= startX + buttonSize then
                 state.lightsOn = not state.lightsOn
+                -- Turn off high beams if lights are turned off
+                if not state.lightsOn then
+                    state.highBeamsOn = false
+                end
                 lcd.invalidate()
                 print("Lights toggled: " .. tostring(state.lightsOn))
                 return true
-            -- Left indicator
+            -- High beams button
             elseif x >= startX + buttonSize + spacing and x <= startX + (buttonSize + spacing) * 2 - spacing then
-                state.indicatorLeft = not state.indicatorLeft
-                if state.indicatorLeft then
-                    state.indicatorRight = false
+                -- Can only turn on high beams if lights are on
+                if state.lightsOn then
+                    state.highBeamsOn = not state.highBeamsOn
+                    lcd.invalidate()
+                    print("High beams toggled: " .. tostring(state.highBeamsOn))
                 end
-                updateIndicatorValue()
-                lcd.invalidate()
                 return true
-            -- Right indicator
+            -- Warning light button
             elseif x >= startX + (buttonSize + spacing) * 2 and x <= startX + (buttonSize + spacing) * 3 - spacing then
-                state.indicatorRight = not state.indicatorRight
-                if state.indicatorRight then
-                    state.indicatorLeft = false
-                end
-                updateIndicatorValue()
+                state.warningLight = not state.warningLight
                 lcd.invalidate()
+                print("Warning light toggled: " .. tostring(state.warningLight))
                 return true
-            -- Horn button
+            -- Horn button (momentary - activate on press)
             elseif x >= startX + (buttonSize + spacing) * 3 and x <= startX + (buttonSize + spacing) * 4 then
-                state.hornActive = not state.hornActive
+                state.hornActive = true
+                state.hornPressed = true
                 lcd.invalidate()
+                print("Horn activated")
                 return true
             end
         -- Check second row button presses
         elseif y >= buttonY2 and y <= buttonY2 + buttonSize then
-            -- Button 5
+            -- Left indicator
             if x >= startX and x <= startX + buttonSize then
-                state.button5 = not state.button5
+                state.indicatorLeft = not state.indicatorLeft
+                if state.indicatorLeft then
+                    state.indicatorRight = false
+                end
                 lcd.invalidate()
+                print("Left indicator toggled: " .. tostring(state.indicatorLeft))
                 return true
-            -- Button 6
+            -- Right indicator
             elseif x >= startX + buttonSize + spacing and x <= startX + (buttonSize + spacing) * 2 - spacing then
-                state.button6 = not state.button6
+                state.indicatorRight = not state.indicatorRight
+                if state.indicatorRight then
+                    state.indicatorLeft = false
+                end
                 lcd.invalidate()
+                print("Right indicator toggled: " .. tostring(state.indicatorRight))
                 return true
-            -- Button 7
+            -- Tipper Up
             elseif x >= startX + (buttonSize + spacing) * 2 and x <= startX + (buttonSize + spacing) * 3 - spacing then
-                state.button7 = not state.button7
+                state.tipperUp = not state.tipperUp
+                if state.tipperUp then
+                    state.tipperDown = false
+                end
                 lcd.invalidate()
+                print("Tipper up toggled: " .. tostring(state.tipperUp))
                 return true
-            -- Button 8
+            -- Tipper Down
             elseif x >= startX + (buttonSize + spacing) * 3 and x <= startX + (buttonSize + spacing) * 4 then
-                state.button8 = not state.button8
+                state.tipperDown = not state.tipperDown
+                if state.tipperDown then
+                    state.tipperUp = false
+                end
                 lcd.invalidate()
+                print("Tipper down toggled: " .. tostring(state.tipperDown))
                 return true
             end
         end
@@ -280,24 +370,30 @@ local function event(widget, category, value, x, y)
 end
 
 local function wakeup(widget)
-    local screenW, screenH = lcd.getWindowSize()
-    
-    -- Blink indicators at 500ms interval
+    -- Blink indicators and warning light at 500ms interval
     local currentTime = os.clock()
     if currentTime - state.lastBlinkTime >= 0.5 then
         state.blinkState = not state.blinkState
         state.lastBlinkTime = currentTime
         
-        -- Invalidate display if any indicator is active
-        if state.indicatorLeft or state.indicatorRight then
+        -- Invalidate display if any blinking element is active
+        if state.indicatorLeft or state.indicatorRight or state.warningLight then
             lcd.invalidate()
         end
+    end
+    
+    -- Safety: Auto-deactivate horn if it's been active for more than 5 seconds
+    -- This prevents the horn from getting stuck on
+    if state.hornActive and not state.hornPressed then
+        state.hornActive = false
+        lcd.invalidate()
+        print("Horn auto-deactivated (safety)")
     end
 end
 
 -- Register the widget with Ethos
 local function init()
-    -- Register custom source for indicator control with proper callbacks
+    -- Register custom source for indicator control
     system.registerSource({
         key = "mogind",
         name = "Mogster Indicator",
@@ -305,7 +401,39 @@ local function init()
         wakeup = indicatorSourceWakeup
     })
     
-    print("Indicator source registered with callbacks")
+    -- Register custom source for tipper control
+    system.registerSource({
+        key = "mogtip",
+        name = "Mogster Tipper",
+        init = tipperSourceInit,
+        wakeup = tipperSourceWakeup
+    })
+    
+    -- Register custom source for warning light
+    system.registerSource({
+        key = "mogwarn",
+        name = "Mogster Warning",
+        init = warningSourceInit,
+        wakeup = warningSourceWakeup
+    })
+    
+    -- Register custom source for lights
+    system.registerSource({
+        key = "mogligh",
+        name = "Mogster Lights",
+        init = lightsSourceInit,
+        wakeup = lightsSourceWakeup
+    })
+    
+    -- Register custom source for horn
+    system.registerSource({
+        key = "moghorn",
+        name = "Mogster Horn",
+        init = hornSourceInit,
+        wakeup = hornSourceWakeup
+    })
+    
+    print("All Mogster sources registered with callbacks")
     
     system.registerWidget({
         key = "mogster",

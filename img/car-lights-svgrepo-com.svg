@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+
+<svg
+   fill="#000000"
+   height="800px"
+   width="800px"
+   version="1.1"
+   id="Layer_1"
+   viewBox="0 0 512 512"
+   xml:space="preserve"
+   sodipodi:docname="car-lights-svgrepo-com.svg"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   inkscape:export-filename="light.png"
+   inkscape:export-xdpi="400"
+   inkscape:export-ydpi="400"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><defs
+   id="defs12" /><sodipodi:namedview
+   id="namedview12"
+   pagecolor="#ffffff"
+   bordercolor="#666666"
+   borderopacity="1.0"
+   inkscape:showpageshadow="2"
+   inkscape:pageopacity="0.0"
+   inkscape:pagecheckerboard="0"
+   inkscape:deskcolor="#d1d1d1"
+   inkscape:zoom="0.72875"
+   inkscape:cx="575.64322"
+   inkscape:cy="276.50086"
+   inkscape:window-width="1346"
+   inkscape:window-height="1237"
+   inkscape:window-x="1093"
+   inkscape:window-y="610"
+   inkscape:window-maximized="0"
+   inkscape:current-layer="Layer_1" />
+<g
+   id="g2"
+   transform="matrix(0.73535898,0,0,1,88.072531,0)">
+	<g
+   id="g1">
+		<path
+   d="M 499.2,76.8 H 345.6 c -7.074,0 -12.8,5.726 -12.8,12.8 0,7.074 5.726,12.8 12.8,12.8 h 153.6 c 7.074,0 12.8,-5.726 12.8,-12.8 0,-7.074 -5.726,-12.8 -12.8,-12.8 z"
+   id="path1" />
+	</g>
+</g>
+<g
+   id="g4"
+   transform="matrix(0.73535898,0,0,1,88.072531,0)">
+	<g
+   id="g3">
+		<path
+   d="M 499.2,243.2 H 345.6 c -7.074,0 -12.8,5.726 -12.8,12.8 0,7.074 5.726,12.8 12.8,12.8 h 153.6 c 7.074,0 12.8,-5.726 12.8,-12.8 0,-7.074 -5.726,-12.8 -12.8,-12.8 z"
+   id="path2" />
+	</g>
+</g>
+<g
+   id="g6"
+   transform="matrix(0.73535898,0,0,1,88.072531,0)">
+	<g
+   id="g5">
+		<path
+   d="M 499.2,409.6 H 345.6 c -7.074,0 -12.8,5.726 -12.8,12.8 0,7.074 5.726,12.8 12.8,12.8 h 153.6 c 7.074,0 12.8,-5.726 12.8,-12.8 0,-7.074 -5.726,-12.8 -12.8,-12.8 z"
+   id="path4" />
+	</g>
+</g>
+<g
+   id="g8"
+   transform="matrix(0.73535898,0,0,1,88.072531,0)">
+	<g
+   id="g7">
+		<path
+   d="M 499.2,326.4 H 345.6 c -7.074,0 -12.8,5.726 -12.8,12.8 0,7.074 5.726,12.8 12.8,12.8 h 153.6 c 7.074,0 12.8,-5.726 12.8,-12.8 0,-7.074 -5.726,-12.8 -12.8,-12.8 z"
+   id="path6" />
+	</g>
+</g>
+<g
+   id="g10"
+   transform="matrix(0.73535898,0,0,1,88.072531,0)">
+	<g
+   id="g9">
+		<path
+   d="M 499.2,160 H 345.6 c -7.074,0 -12.8,5.726 -12.8,12.8 0,7.074 5.726,12.8 12.8,12.8 h 153.6 c 7.074,0 12.8,-5.726 12.8,-12.8 0,-7.074 -5.726,-12.8 -12.8,-12.8 z"
+   id="path8" />
+	</g>
+</g>
+<g
+   id="g12">
+	<g
+   id="g11">
+		<path
+   d="M 251.699,62.601 C 246.835,55.305 238.754,51.2 230.391,51.2 c -3.183,0 -6.4,0.597 -9.498,1.835 l -17.417,6.946 C 85.35,107.008 0,140.979 0,256 0,371.021 85.35,404.992 203.469,452.019 l 17.417,6.946 c 3.106,1.246 6.323,1.835 9.506,1.835 8.363,0 16.444,-4.105 21.308,-11.401 56.635,-84.949 56.635,-301.849 -10e-4,-386.798 z"
+   id="path10"
+   sodipodi:nodetypes="csccsccscc" />
+	</g>
+</g>
+</svg>
