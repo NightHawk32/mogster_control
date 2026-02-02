@@ -33,14 +33,30 @@ local state = {
 }
 
 -- Source for indicator control
-local function getIndicatorValue()
+local indicatorSource = nil
+
+-- Source callback functions
+local function indicatorSourceInit(source)
+    print("Indicator source init")
+    source:unit(UNIT_RAW)
+    source:value(0)
+end
+
+local function indicatorSourceWakeup(source)
+    -- Update source value based on current state
+    local value = 0
     if state.indicatorLeft then
-        return -1024  -- Full left
+        value = -100  -- Full left
     elseif state.indicatorRight then
-        return 1024   -- Full right
-    else
-        return 0      -- Center position
+        value = 100   -- Full right
     end
+    source:value(value)
+end
+
+-- Helper function to trigger indicator update
+local function updateIndicatorValue()
+    print("Indicator state changed")
+    -- The actual update happens in the wakeup callback
 end
 
 -- Helper function to render control button with optional icon
@@ -217,6 +233,7 @@ local function event(widget, category, value, x, y)
                 if state.indicatorLeft then
                     state.indicatorRight = false
                 end
+                updateIndicatorValue()
                 lcd.invalidate()
                 return true
             -- Right indicator
@@ -225,6 +242,7 @@ local function event(widget, category, value, x, y)
                 if state.indicatorRight then
                     state.indicatorLeft = false
                 end
+                updateIndicatorValue()
                 lcd.invalidate()
                 return true
             -- Horn button
@@ -279,13 +297,15 @@ end
 
 -- Register the widget with Ethos
 local function init()
-    -- Register custom source for indicator control
+    -- Register custom source for indicator control with proper callbacks
     system.registerSource({
         key = "mogind",
         name = "Mogster Indicator",
-        getValue = getIndicatorValue,
-        unit = UNIT_RAW
+        init = indicatorSourceInit,
+        wakeup = indicatorSourceWakeup
     })
+    
+    print("Indicator source registered with callbacks")
     
     system.registerWidget({
         key = "mogster",
@@ -297,4 +317,5 @@ local function init()
     })
 end
 
-return {init = init}
+local module = {init = init}
+return module
