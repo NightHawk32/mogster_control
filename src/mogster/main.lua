@@ -103,62 +103,65 @@ local function create(zone, options)
 end
 
 local function paint(widget)
-    if not widget or not widget.zone then
+    if not widget then
         return
     end
     
-    local zone = widget.zone
+    local screenW, screenH = lcd.getWindowSize()
+    local zone = {x = 0, y = 0, w = screenW, h = screenH}
     local isDarkMode = lcd.darkMode()
     
     -- Clear background
     lcd.color(isDarkMode and lcd.RGB(20, 20, 20) or lcd.RGB(240, 240, 240))
     lcd.drawFilledRectangle(zone.x, zone.y, zone.w, zone.h)
     
-    -- Title
-    lcd.color(isDarkMode and lcd.RGB(255, 255, 255) or lcd.RGB(0, 0, 0))
-    lcd.font(FONT_XXL)
-    local title = "MOGSTER CONTROL"
-    local tw, th = lcd.getTextSize(title)
-    lcd.drawText(zone.x + (zone.w - tw) / 2, zone.y + 10, title)
-    
     -- Calculate button layout
-    local buttonY = zone.y + 80
     local buttonW = math.min(150, (zone.w - 100) / 4)
     local buttonH = 60
     local spacing = 20
     local totalWidth = buttonW * 4 + spacing * 3
     local startX = zone.x + (zone.w - totalWidth) / 2
     
-    -- Draw control buttons
-    renderControlButton(startX, buttonY, buttonW, buttonH, "LIGHTS", state.lightsOn, lcd.RGB(255, 200, 0))
-    renderControlButton(startX + buttonW + spacing, buttonY, buttonW, buttonH, "◄ LEFT", state.indicatorLeft, lcd.RGB(255, 140, 0))
-    renderControlButton(startX + (buttonW + spacing) * 2, buttonY, buttonW, buttonH, "RIGHT ►", state.indicatorRight, lcd.RGB(255, 140, 0))
-    renderControlButton(startX + (buttonW + spacing) * 3, buttonY, buttonW, buttonH, "HORN", state.hornActive, lcd.RGB(200, 0, 0))
+    -- First row of control buttons
+    local buttonY1 = zone.y + 20
+    renderControlButton(startX, buttonY1, buttonW, buttonH, "LIGHTS", state.lightsOn, lcd.RGB(255, 200, 0))
+    renderControlButton(startX + buttonW + spacing, buttonY1, buttonW, buttonH, "◄ LEFT", state.indicatorLeft, lcd.RGB(255, 140, 0))
+    renderControlButton(startX + (buttonW + spacing) * 2, buttonY1, buttonW, buttonH, "RIGHT ►", state.indicatorRight, lcd.RGB(255, 140, 0))
+    renderControlButton(startX + (buttonW + spacing) * 3, buttonY1, buttonW, buttonH, "HORN", state.hornActive, lcd.RGB(200, 0, 0))
+    
+    -- Second row of control buttons
+    local buttonY2 = buttonY1 + buttonH + spacing
+    renderControlButton(startX, buttonY2, buttonW, buttonH, "BTN 5", false, lcd.RGB(0, 150, 255))
+    renderControlButton(startX + buttonW + spacing, buttonY2, buttonW, buttonH, "BTN 6", false, lcd.RGB(0, 150, 255))
+    renderControlButton(startX + (buttonW + spacing) * 2, buttonY2, buttonW, buttonH, "BTN 7", false, lcd.RGB(0, 150, 255))
+    renderControlButton(startX + (buttonW + spacing) * 3, buttonY2, buttonW, buttonH, "BTN 8", false, lcd.RGB(0, 150, 255))
     
     -- Battery status
-    local battY = buttonY + buttonH + 40
+    local battY = buttonY2 + buttonH + 40
     local battW = zone.w - 100
     local battH = 80
     renderBatteryStatus(zone.x + 50, battY, battW, battH, state.batteryVoltage, state.batteryPercent)
 end
 
 local function event(widget, category, value, x, y)
-    if not widget or not widget.zone then
+    if not widget then
         return false
     end
     
     -- Handle touch events
     if category == EVT_TOUCH_FIRST or category == EVT_TOUCH_TAP then
-        local zone = widget.zone
-        local buttonY = zone.y + 80
+        local screenW, screenH = lcd.getWindowSize()
+        local zone = {x = 0, y = 0, w = screenW, h = screenH}
         local buttonW = math.min(150, (zone.w - 100) / 4)
         local buttonH = 60
         local spacing = 20
         local totalWidth = buttonW * 4 + spacing * 3
         local startX = zone.x + (zone.w - totalWidth) / 2
+        local buttonY1 = zone.y + 20
+        local buttonY2 = buttonY1 + buttonH + spacing
         
-        -- Check button presses
-        if y >= buttonY and y <= buttonY + buttonH then
+        -- Check first row button presses
+        if y >= buttonY1 and y <= buttonY1 + buttonH then
             -- Lights button
             if x >= startX and x <= startX + buttonW then
                 state.lightsOn = not state.lightsOn
@@ -186,9 +189,35 @@ local function event(widget, category, value, x, y)
                 lcd.invalidate()
                 return true
             end
+        -- Check second row button presses
+        elseif y >= buttonY2 and y <= buttonY2 + buttonH then
+            -- Button 5-8 (placeholder functionality)
+            if x >= startX and x <= startX + buttonW then
+                -- Button 5 action
+                lcd.invalidate()
+                return true
+            elseif x >= startX + buttonW + spacing and x <= startX + (buttonW + spacing) * 2 - spacing then
+                -- Button 6 action
+                lcd.invalidate()
+                return true
+            elseif x >= startX + (buttonW + spacing) * 2 and x <= startX + (buttonW + spacing) * 3 - spacing then
+                -- Button 7 action
+                lcd.invalidate()
+                return true
+            elseif x >= startX + (buttonW + spacing) * 3 and x <= startX + (buttonW + spacing) * 4 then
+                -- Button 8 action
+                lcd.invalidate()
+                return true
+            end
         end
     end
     return false
+end
+
+local function wakeup(widget)
+    local screenW, screenH = lcd.getWindowSize()
+    -- Called periodically when widget is visible
+    -- Can be used for periodic updates, animations, etc.
 end
 
 -- Register the widget with Ethos
@@ -198,7 +227,8 @@ local function init()
         name = name,
         create = create,
         paint = paint,
-        event = event
+        event = event,
+        wakeup = wakeup
     })
 end
 
