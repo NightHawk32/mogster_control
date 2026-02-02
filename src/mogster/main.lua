@@ -15,6 +15,10 @@ local state = {
     indicatorLeft = false,
     indicatorRight = false,
     hornActive = false,
+    button5 = false,
+    button6 = false,
+    button7 = false,
+    button8 = false,
     batteryVoltage = 12.6,
     batteryPercent = 75
 }
@@ -125,16 +129,16 @@ local function paint(widget)
     -- First row of control buttons
     local buttonY1 = zone.y + 20
     renderControlButton(startX, buttonY1, buttonW, buttonH, "LIGHTS", state.lightsOn, lcd.RGB(255, 200, 0))
-    renderControlButton(startX + buttonW + spacing, buttonY1, buttonW, buttonH, "◄ LEFT", state.indicatorLeft, lcd.RGB(255, 140, 0))
-    renderControlButton(startX + (buttonW + spacing) * 2, buttonY1, buttonW, buttonH, "RIGHT ►", state.indicatorRight, lcd.RGB(255, 140, 0))
+    renderControlButton(startX + buttonW + spacing, buttonY1, buttonW, buttonH, "LEFT", state.indicatorLeft, lcd.RGB(255, 140, 0))
+    renderControlButton(startX + (buttonW + spacing) * 2, buttonY1, buttonW, buttonH, "RIGHT", state.indicatorRight, lcd.RGB(255, 140, 0))
     renderControlButton(startX + (buttonW + spacing) * 3, buttonY1, buttonW, buttonH, "HORN", state.hornActive, lcd.RGB(200, 0, 0))
     
     -- Second row of control buttons
     local buttonY2 = buttonY1 + buttonH + spacing
-    renderControlButton(startX, buttonY2, buttonW, buttonH, "BTN 5", false, lcd.RGB(0, 150, 255))
-    renderControlButton(startX + buttonW + spacing, buttonY2, buttonW, buttonH, "BTN 6", false, lcd.RGB(0, 150, 255))
-    renderControlButton(startX + (buttonW + spacing) * 2, buttonY2, buttonW, buttonH, "BTN 7", false, lcd.RGB(0, 150, 255))
-    renderControlButton(startX + (buttonW + spacing) * 3, buttonY2, buttonW, buttonH, "BTN 8", false, lcd.RGB(0, 150, 255))
+    renderControlButton(startX, buttonY2, buttonW, buttonH, "BTN 5", state.button5, lcd.RGB(0, 150, 255))
+    renderControlButton(startX + buttonW + spacing, buttonY2, buttonW, buttonH, "BTN 6", state.button6, lcd.RGB(0, 200, 100))
+    renderControlButton(startX + (buttonW + spacing) * 2, buttonY2, buttonW, buttonH, "BTN 7", state.button7, lcd.RGB(150, 0, 255))
+    renderControlButton(startX + (buttonW + spacing) * 3, buttonY2, buttonW, buttonH, "BTN 8", state.button8, lcd.RGB(255, 100, 150))
     
     -- Battery status
     local battY = buttonY2 + buttonH + 40
@@ -147,9 +151,10 @@ local function event(widget, category, value, x, y)
     if not widget then
         return false
     end
+    print("Event received: category=" .. tostring(category) .. " value=" .. tostring(value) .. " x=" .. tostring(x) .. " y=" .. tostring(y))
     
     -- Handle touch events
-    if category == EVT_TOUCH_FIRST or category == EVT_TOUCH_TAP then
+    if category == 1 and value == 16641 then
         local screenW, screenH = lcd.getWindowSize()
         local zone = {x = 0, y = 0, w = screenW, h = screenH}
         local buttonW = math.min(150, (zone.w - 100) / 4)
@@ -166,6 +171,7 @@ local function event(widget, category, value, x, y)
             if x >= startX and x <= startX + buttonW then
                 state.lightsOn = not state.lightsOn
                 lcd.invalidate()
+                print("Lights toggled: " .. tostring(state.lightsOn))
                 return true
             -- Left indicator
             elseif x >= startX + buttonW + spacing and x <= startX + (buttonW + spacing) * 2 - spacing then
@@ -191,21 +197,24 @@ local function event(widget, category, value, x, y)
             end
         -- Check second row button presses
         elseif y >= buttonY2 and y <= buttonY2 + buttonH then
-            -- Button 5-8 (placeholder functionality)
+            -- Button 5
             if x >= startX and x <= startX + buttonW then
-                -- Button 5 action
+                state.button5 = not state.button5
                 lcd.invalidate()
                 return true
+            -- Button 6
             elseif x >= startX + buttonW + spacing and x <= startX + (buttonW + spacing) * 2 - spacing then
-                -- Button 6 action
+                state.button6 = not state.button6
                 lcd.invalidate()
                 return true
+            -- Button 7
             elseif x >= startX + (buttonW + spacing) * 2 and x <= startX + (buttonW + spacing) * 3 - spacing then
-                -- Button 7 action
+                state.button7 = not state.button7
                 lcd.invalidate()
                 return true
+            -- Button 8
             elseif x >= startX + (buttonW + spacing) * 3 and x <= startX + (buttonW + spacing) * 4 then
-                -- Button 8 action
+                state.button8 = not state.button8
                 lcd.invalidate()
                 return true
             end
